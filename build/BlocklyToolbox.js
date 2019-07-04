@@ -59,15 +59,21 @@ var BlocklyToolbox = function (_React$Component) {
         var blocks = groupedByCategory[key].map(function (type) {
           return _react2.default.createElement(_ToolBoxTagsComponents.Block, { type: type, key: type });
         });
-        var categoryAppearance = appearance && appearance.categories && appearance.categories[key] || {};
-        return _react2.default.createElement(
-          _ToolBoxTagsComponents.Category,
-          _extends({}, categoryAppearance, {
-            key: key,
-            name: key
-          }),
-          blocks
-        );
+        var Element = void 0;
+        if (props.showCategories) {
+          var categoryAppearance = appearance && appearance.categories && appearance.categories[key] || {};
+          Element = _react2.default.createElement(
+            _ToolBoxTagsComponents.Category,
+            _extends({}, categoryAppearance, {
+              key: key,
+              name: key
+            }),
+            blocks
+          );
+        } else {
+          Element = blocks;
+        }
+        return Element;
       });
 
       return _react2.default.createElement(
@@ -88,7 +94,8 @@ var BlocklyToolbox = function (_React$Component) {
 BlocklyToolbox.defaultProps = {
   onRef: function onRef() {},
   appearance: {},
-  onUpdate: function onUpdate() {}
+  onUpdate: function onUpdate() {},
+  showCategories: true
 };
 
 BlocklyToolbox.propTypes = {
@@ -96,7 +103,8 @@ BlocklyToolbox.propTypes = {
   onUpdate: _propTypes2.default.func,
   tools: _propTypes2.default.arrayOf(Object).isRequired,
   children: _propTypes2.default.oneOfType([_propTypes2.default.arrayOf(_propTypes2.default.node), _propTypes2.default.node]),
-  appearance: _propTypes2.default.object
+  appearance: _propTypes2.default.object,
+  showCategories: _propTypes2.default.bool
 };
 
 styles = {

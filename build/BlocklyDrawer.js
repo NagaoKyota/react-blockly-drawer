@@ -18,9 +18,23 @@ var _browser = require('node-blockly/browser');
 
 var _browser2 = _interopRequireDefault(_browser);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 var _BlocklyToolbox = require('./BlocklyToolbox');
 
 var _BlocklyToolbox2 = _interopRequireDefault(_BlocklyToolbox);
+
+var _FixBlockly = require('./FixBlockly');
+
+var FixBlockly = _interopRequireWildcard(_FixBlockly);
+
+var _CustomizeBlockly = require('./CustomizeBlockly');
+
+var CustomizeBlockly = _interopRequireWildcard(_CustomizeBlockly);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -57,6 +71,10 @@ var BlocklyDrawer = function (_Component) {
     key: 'componentWillMount',
     value: function componentWillMount() {
       initTools(this.props.tools);
+      if (this.props.unDeletableBlocks) {
+        initTools(this.props.unDeletableBlocks);
+      }
+      _browser2.default.WidgetDiv.hide(); // see: https://github.com/codeorjp/proguru-frontend/blob/master/src/common/blockly/BlocklyModel.jsx#L106
     }
   }, {
     key: 'componentDidMount',
@@ -66,6 +84,18 @@ var BlocklyDrawer = function (_Component) {
       if (this.wrapper) {
         window.addEventListener('resize', this.onResize, false);
         this.onResize();
+
+        // fix bugs
+        if (this.props.fixBugs) {
+          var fixList = this.props.fixBugs;
+          Object.keys(fixList).forEach(function (funcName) {
+            if (_lodash2.default.has(FixBlockly, funcName)) {
+              if (fixList[funcName] === true) {
+                FixBlockly[funcName](_browser2.default);
+              }
+            }
+          });
+        }
 
         this.workspacePlayground = _browser2.default.inject(this.content, Object.assign({ toolbox: this.toolbox }, this.props.injectOptions));
 
@@ -81,12 +111,32 @@ var BlocklyDrawer = function (_Component) {
           var xmlText = _browser2.default.Xml.domToText(xml);
           _this2.props.onChange(code, xmlText);
         });
+
+        // customized
+        if (this.props.customize) {
+          var customizeList = this.props.customize;
+          Object.keys(customizeList).forEach(function (funcName) {
+            if (_lodash2.default.has(CustomizeBlockly, funcName)) {
+              if (customizeList[funcName] === true) {
+                CustomizeBlockly[funcName](_browser2.default);
+              }
+            }
+          });
+        }
+
+        // after render
+        if (this.props.onRendered) {
+          this.props.onRendered(this.workspacePlayground);
+        }
       }
     }
   }, {
     key: 'componentWillReceiveProps',
     value: function componentWillReceiveProps(nextProps) {
       initTools(nextProps.tools);
+      if (nextProps.unDeletableBlocks) {
+        initTools(nextProps.unDeletableBlocks);
+      }
       this.workspacePlayground.clear();
       if (nextProps.workspaceXML) {
         var dom = _browser2.default.Xml.textToDom(nextProps.workspaceXML);
@@ -117,6 +167,7 @@ var BlocklyDrawer = function (_Component) {
       return _react2.default.createElement(
         'div',
         {
+          id: 'BlocklyDrawerRoot',
           className: this.props.className,
           style: wrapperStyle,
           ref: function ref(wrapper) {
@@ -124,6 +175,7 @@ var BlocklyDrawer = function (_Component) {
           }
         },
         _react2.default.createElement('div', {
+          id: 'BlocklyInjectionDivWrapper',
           style: styles.content,
           ref: function ref(content) {
             _this3.content = content;
@@ -137,6 +189,7 @@ var BlocklyDrawer = function (_Component) {
             },
             tools: this.props.tools,
             appearance: this.props.appearance,
+            showCategories: this.props.showCategories,
             onUpdate: function onUpdate() {
               if (_this3.workspacePlayground && _this3.toolbox) {
                 _this3.workspacePlayground.updateToolbox(_this3.toolbox.outerHTML);
@@ -154,13 +207,15 @@ var BlocklyDrawer = function (_Component) {
 
 BlocklyDrawer.defaultProps = {
   onChange: function onChange() {},
+  onRendered: function onRendered() {},
   tools: [],
   workspaceXML: '',
   injectOptions: {},
   language: _browser2.default.JavaScript,
   appearance: {},
   className: '',
-  style: {}
+  style: {},
+  showCategories: true
 };
 
 BlocklyDrawer.propTypes = {
@@ -170,14 +225,24 @@ BlocklyDrawer.propTypes = {
     block: _propTypes2.default.shape({ init: _propTypes2.default.func }),
     generator: _propTypes2.default.func
   })).isRequired,
+  unDeletableBlocks: _propTypes2.default.arrayOf(_propTypes2.default.shape({
+    name: _propTypes2.default.string,
+    category: _propTypes2.default.string,
+    block: _propTypes2.default.shape({ init: _propTypes2.default.func }),
+    generator: _propTypes2.default.func
+  })),
   onChange: _propTypes2.default.func,
+  onRendered: _propTypes2.default.func,
   children: _propTypes2.default.oneOfType([_propTypes2.default.arrayOf(_propTypes2.default.node), _propTypes2.default.node]),
   workspaceXML: _propTypes2.default.string,
   injectOptions: _propTypes2.default.object,
+  customize: _propTypes2.default.object,
+  fixBugs: _propTypes2.default.object,
   language: _propTypes2.default.object,
   appearance: _propTypes2.default.object,
   className: _propTypes2.default.string,
-  style: _propTypes2.default.object
+  style: _propTypes2.default.object,
+  showCategories: _propTypes2.default.bool
 };
 
 styles = {
